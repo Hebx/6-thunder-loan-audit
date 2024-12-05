@@ -156,7 +156,7 @@ contract ThunderLoan is Initializable, OwnableUpgradeable, UUPSUpgradeable, Orac
         emit Deposit(msg.sender, token, amount);
         assetToken.mint(msg.sender, mintAmount);
         // @audit-info Q: Why we calculate the fee and update exchange rate here?
-        // @audit-issue We should not be updating the exchange rate in the deposit function, this breaks the internal accounting of AssetToken making it impossible to redeem
+        // @audit-issue High: We should not be updating the exchange rate in the deposit function, this breaks the internal accounting of AssetToken making it impossible to redeem
         uint256 calculatedFee = getCalculatedFee(token, amount);
         assetToken.updateExchangeRate(calculatedFee);
 
@@ -186,6 +186,7 @@ contract ThunderLoan is Initializable, OwnableUpgradeable, UUPSUpgradeable, Orac
         assetToken.transferUnderlyingTo(msg.sender, amountUnderlying);
     }
 
+//@audit-issue Medium: Using Tswap as price oracle leads to price and oracle manipulation
     function flashloan(
         address receiverAddress,
         IERC20 token,
@@ -235,6 +236,8 @@ contract ThunderLoan is Initializable, OwnableUpgradeable, UUPSUpgradeable, Orac
         }
         s_currentlyFlashLoaning[token] = false;
     }
+
+    // @audit-issue Low: Unable to use repay to repay a flash loan inside of another flash loan.
 
     function repay(IERC20 token, uint256 amount) public {
         if (!s_currentlyFlashLoaning[token]) {
