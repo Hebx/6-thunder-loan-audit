@@ -139,20 +139,28 @@ contract ThunderLoan is Initializable, OwnableUpgradeable, UUPSUpgradeable, Orac
     //////////////////////////////////////////////////////////////*/
     function initialize(address tswapAddress) external initializer {
         __Ownable_init(msg.sender);
+        //@note sets storage slots for uups
         __UUPSUpgradeable_init();
         __Oracle_init(tswapAddress);
+        // @note  why not constant variables?
         s_feePrecision = 1e18;
         s_flashLoanFee = 3e15; // 0.3% ETH fee
     }
 
     function deposit(IERC20 token, uint256 amount) external revertIfZero(amount) revertIfNotAllowedToken(token) {
+        // @note represents the share of the pool
         AssetToken assetToken = s_tokenToAssetToken[token];
         uint256 exchangeRate = assetToken.getExchangeRate();
+        // @note never to be zero
         uint256 mintAmount = (amount * assetToken.EXCHANGE_RATE_PRECISION()) / exchangeRate;
         emit Deposit(msg.sender, token, amount);
         assetToken.mint(msg.sender, mintAmount);
+        // @audit-info Q: Why we calculate the fee and update exchange rate here?
+        // @audit-issue We should not be updating the exchange rate in the deposit function, this breaks the internal accounting of AssetToken making it impossible to redeem
         uint256 calculatedFee = getCalculatedFee(token, amount);
         assetToken.updateExchangeRate(calculatedFee);
+
+        // @note lp provider deposits the token to assetToken contract
         token.safeTransferFrom(msg.sender, address(assetToken), amount);
     }
 
