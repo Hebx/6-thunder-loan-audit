@@ -1,4 +1,4 @@
-The price of a token is determined by how many reserves are on either side of the pool.
+[M] The price of a token is determined by how many reserves are on either side of the pool.
 
 **Impact**: Lp will drastically reduce fees for providing liquidity.
 
@@ -16,3 +16,14 @@ The price of a token is determined by how many reserves are on either side of th
 ```
 
 The user then repays the first flash loan, and then repays the second flash loan.
+
+
+**[H] By Calling a flashloan and then ThunderLoan::deposit instead of ThunderLoan::repay users can steal all funds from the protocol.**
+
+__Description__:
+user call a flashloan, deposited instead of repaying it (with the expected fee) will clear the flash loan and allow the user to redeem the amount of the loan ( stealing the funds) 
+__Impact__
+This exploit drains the liquidity pool from the flashloaned token
+
+__Mitigation__:
+Thunderloan could prevent deposits while an AssetToken is currently Flashloaning.
