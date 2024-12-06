@@ -13,6 +13,8 @@ import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy
 import { IFlashLoanReceiver } from "../../src/interfaces/IFlashLoanReceiver.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import { ThunderLoanUpgraded } from "../../src/upgradedProtocol/ThunderLoanUpgraded.sol";
+
 contract ThunderLoanTest is BaseTest {
     uint256 constant AMOUNT = 10e18;
     uint256 constant DEPOSIT_AMOUNT = AMOUNT * 100;
@@ -172,6 +174,18 @@ contract ThunderLoanTest is BaseTest {
         dor.redeemMoney();
         vm.stopPrank();
         assert(tokenA.balanceOf(address(dor)) > 50e18 + calculatedFee);
+    }
+
+    function testUpgradeBreaksFee() public setAllowedToken hasDeposits {
+        uint256 feeBeforeUpgrade = thunderLoan.getFee();
+        vm.startPrank(thunderLoan.owner());
+        ThunderLoanUpgraded upgraded = new ThunderLoanUpgraded();
+        thunderLoan.upgradeToAndCall(address(upgraded), "");
+        uint256 feeAfterUpgrade = thunderLoan.getFee();
+        vm.stopPrank();
+        console.log("Fee before upgrade: ", feeBeforeUpgrade);
+        console.log("Fee after upgrade: ", feeAfterUpgrade);
+        assert(feeBeforeUpgrade != feeAfterUpgrade);
     }
 }
 

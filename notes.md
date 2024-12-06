@@ -27,3 +27,8 @@ This exploit drains the liquidity pool from the flashloaned token
 
 __Mitigation__:
 Thunderloan could prevent deposits while an AssetToken is currently Flashloaning.
+
+
+### [H-3] Mixing up variable location causes storage collisions in ThunderLoan::s_flashLoanFee and ThunderLoan::s_currentlyFlashLoaning
+
+**Impact:** After upgrade, the `s_flashLoanFee` will have the value of `s_feePrecision`. This means that users who take out flash loans right after an upgrade will be charged the wrong fee. Additionally the `s_currentlyFlashLoaning` mapping will start on the wrong storage slot.
